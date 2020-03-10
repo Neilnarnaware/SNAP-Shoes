@@ -1,7 +1,7 @@
 # SNAP SHOES
 JAVA SWING
 
-## KEY FEATURES - 
+## KEY FEATURES 
 
 * GUI - Swing 
 * Login Authentication
