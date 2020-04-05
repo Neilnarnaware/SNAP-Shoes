@@ -5,8 +5,11 @@
  */
 package Snap_Shoes;
 
+import java.awt.HeadlessException;
 import java.sql.Connection;
-import java.sql.*;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import javax.swing.JOptionPane;
 
@@ -20,12 +23,16 @@ public class Login extends javax.swing.JFrame {
      * Creates new form Login
      */
     ArrayList<String> login;
-    MySQLConnect connect;
+    MySQLConnection connection;
+    Connection c;
+    int count;
     //login activity using arraylist
     public Login() {
         initComponents();
-        connect = new MySQLConnect();
         login= new ArrayList<>(){{add("incorrect");}};
+        connection = new MySQLConnection();
+        c = connection.getConnect();
+        
     }
 
     /**
@@ -141,35 +148,62 @@ public class Login extends javax.swing.JFrame {
     }//GEN-LAST:event_usernameActionPerformed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-                String username = (this.username.getText()).toLowerCase();
-                String password = (this.password.getText()).toLowerCase();
+                String username = this.username.getText();
+                String password = this.password.getText();
                 
-                Connection c = connect.getConnect();
-                PreparedStatement ps;
-                ResultSet rs;
+
+        try{
+            String sql_check= "select count(*) from admin where name ='"+username+"' and password = '"+password+"'";
+            PreparedStatement ps = c.prepareStatement(sql_check);
+            ResultSet rs= ps.executeQuery();
+            while(rs.next()){
+                System.out.println(rs.getInt(1));
+                count = rs.getInt(1);
+            
+            }
+            if(count>0){
+                
+                DeleteEntry();
+                login.clear();
                 try{
-                    String sql = "select count(*) from admin where name =".concat(username)+ "and password = "+password;
-                    ps = c.prepareStatement(sql);
-                    rs = ps.executeQuery();
-                    System.out.println(rs);
+                    String sql_status= "insert into loginstatus (status) values ('Correct')";
+                    PreparedStatement ps_status = c.prepareStatement(sql_status);
+                    ps_status.executeUpdate();
                 }
                 catch(Exception e){
+                    System.out.println("Save Correct: try again");
                 }
-                //check for username and password
-                if(username.equalsIgnoreCase("admin")&& password.equalsIgnoreCase("snapshoes123")){
-                    login.clear();
-                    login.add("correct");
+             }
+            else{
+                DeleteEntry();
+                login.clear();
+                try{
+                    String sql_status= "insert into loginstatus (status) values ('Incorrect')";
+                    PreparedStatement ps_status = c.prepareStatement(sql_status);
+                    ps_status.executeUpdate();
                 }
-                else{
-                    login.clear();
-                    login.add("incorrect");
-                    
-                    JOptionPane.showMessageDialog(this, "Incorrect Username or Password");
-                    
+                catch(Exception e){
+                    System.out.println("Save Incorrect: try again");
                 }
+                System.out.println("Incorrect Password");       
+            }
+        }
+        catch(  HeadlessException | SQLException e){
+            System.out.println( e.getMessage());
+        }
                 Login.this.dispose();
     }//GEN-LAST:event_jButton1ActionPerformed
 
+    private void DeleteEntry(){
+        try{
+            String sql_check= "delete from loginstatus";
+            PreparedStatement ps = c.prepareStatement(sql_check);
+            ps.executeUpdate();
+        }
+        catch(Exception e){
+            System.out.println("Delete entry: try again");
+        }
+    }
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
     Login.this.dispose();
     }//GEN-LAST:event_jButton2ActionPerformed
